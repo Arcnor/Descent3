@@ -1,0 +1,21 @@
+{
+	"name": "descent3",
+	"builtin-baseline": "501cb01e517ee5689577bb01ba8bd1b4c1041a53",
+	"dependencies": [
+		{
+			"name": "sdl2",
+			"version>=": "2.30.1#0",
+			"platform": "windows"
+		},
+		{
+			"name": "sdl2",
+			"version>=": "2.30.1#0",
+			"features": ["x11"],
+			"platform": "!windows"
+		},
+		{
+			"name": "sdl2-image",
+			"version>=": "2.8.2#1"
+		}
+	]
+}

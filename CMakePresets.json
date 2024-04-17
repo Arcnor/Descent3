@@ -1,27 +1,68 @@
 {
-    "version": 3
-    , "configurePresets": [
+    "version": 3,
+    "configurePresets": [
         {
-            "name": "win"
-            , "condition": {
-                "type": "equals"
-                , "lhs": "${hostSystemName}"
-                , "rhs": "Windows"
+            "name": "defaults",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/builds/${presetName}"
+        },
+        {
+            "name": "win",
+            "inherits": "defaults",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "architecture": "Win32"
+        },
+        {
+            "name": "mac",
+            "inherits": "defaults",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
             }
-            , "cacheVariables": {
-                "CMAKE_GENERATOR_PLATFORM": {
-                    "type": "STRING"
-                    , "value": "Win32"
+        },
+        {
+            "name": "win-vcpkg",
+            "inherits": "win",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "type": "FILEPATH",
+                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                },
+                "VCPKG_TARGET_ARCHITECTURE": "x86"
+            }
+        },
+        {
+            "name": "mac-vcpkg",
+            "inherits": "mac",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "type": "FILEPATH",
+                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
                 }
             }
         }
-        , {
-            "name": "mac"
-            , "condition": {
-                "type": "equals"
-                , "lhs": "${hostSystemName}"
-                , "rhs": "Darwin"
-            }
+    ],
+    "buildPresets": [
+        {
+            "name": "win",
+            "configurePreset": "win"
+        },
+        {
+            "name": "mac",
+            "configurePreset": "mac"
+        },
+        {
+            "name": "win-vcpkg",
+            "configurePreset": "win-vcpkg"
+        },
+        {
+            "name": "mac-vcpkg",
+            "configurePreset": "mac-vcpkg"
         }
     ]
 }

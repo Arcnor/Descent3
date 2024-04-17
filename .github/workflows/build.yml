@@ -2,9 +2,9 @@ name: Descent 3 Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "midnite_main", "main" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "midnite_main", "main" ]
 
 jobs:
   build:
@@ -12,10 +12,21 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [{runner: windows-latest, preset: win}, {runner: macos-latest, preset: mac}]
+        os: [{
+          runner: windows-latest,
+          preset: win-vcpkg,
+          triplet: x86-windows
+        }, {
+          runner: macos-latest,
+          preset: mac,
+          triplet: x64-osx
+        }]
         build_type: [Debug, Release]
 
     runs-on: ${{ matrix.os.runner }}
+
+    env:
+      VCPKG_DEFAULT_TRIPLET: ${{ matrix.os.triplet }}
 
     steps:
     - uses: actions/checkout@v4
@@ -24,18 +35,22 @@ jobs:
       if: ${{ matrix.os.preset == 'mac' }}
       run: |
         # Note this is x86_64 Homebrew
-        /usr/local/bin/brew install sdl12-compat sdl2_image
+        /usr/local/bin/brew install sdl12-compat
         curl --output-dir /tmp -fsSLO https://github.com/XQuartz/XQuartz/releases/download/XQuartz-2.8.5/XQuartz-2.8.5.pkg
         sudo installer -pkg /tmp/XQuartz-2.8.5.pkg -target LocalSystem
 
-    - name: Configure CMake
-      run: cmake --preset ${{matrix.os.preset}} -B ${{github.workspace}}/build
+    - uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: "501cb01e517ee5689577bb01ba8bd1b4c1041a53"
 
-    - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{matrix.build_type}}
+    - uses: lukka/run-cmake@v10
+      with:
+        configurePreset: ${{matrix.os.preset}}
+        buildPreset: ${{matrix.os.preset}}
+        buildPresetAdditionalArgs: "['--config ${{matrix.build_type}}']"
 
     - name: 'Upload Artifacts'
       uses: actions/upload-artifact@v4
       with:
         name: build_${{matrix.build_type}}
-        path: ${{github.workspace}}/build/Descent3/${{matrix.build_type}}
+        path: "${{github.workspace}}/builds/${{matrix.os.preset}}/Descent3/${{matrix.build_type}}"

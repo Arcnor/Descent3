@@ -5,11 +5,24 @@ MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 # allow more human readable "if then else" constructs
 SET( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 
+if (${CMAKE_TOOLCHAIN_FILE} MATCHES ".*vcpkg.cmake.*")
+	message(STATUS "Building with vcpkg toolchain.")
+	set(USING_VCPKG ON)
+endif()
+
 # TODO: Apple Silicon (arm64) later
 SET( CMAKE_OSX_ARCHITECTURES x86_64 CACHE STRING "" FORCE)
 
 
 PROJECT(Descent3)
+
+IF (USING_VCPKG)
+	FIND_PACKAGE(SDL2 CONFIG REQUIRED)
+	SET(SDL_LIBRARY $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main> $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>)
+ELSE ()
+	FIND_PACKAGE(SDL REQUIRED)
+	MESSAGE( "SDL Include Dir is " ${SDL_INCLUDE_DIR} )
+ENDIF ()
 
 IF (UNIX)
 SET (D3_GAMEDIR "~/Descent3/")
@@ -22,14 +35,6 @@ SET (D3_GAMEDIR "~/Descent3/")
     LIST(APPEND CMAKE_CXX_FLAGS "-m32")
     LIST(APPEND CMAKE_C_FLAGS "-m32")
   ENDIF()
-  FIND_PACKAGE( SDL REQUIRED )
-  IF (APPLE)
-    # Provide FIND_PACKAGE( SDL_image ) below with an include dir and library that work with brew-installed sdl2_image
-    FIND_PATH(SDL_IMAGE_INCLUDE_DIR SDL_image.h PATH_SUFFIXES include/SDL2)
-    FIND_LIBRARY(SDL_IMAGE_LIBRARY SDL2_image)
-  ENDIF()
-  FIND_PACKAGE( SDL_image REQUIRED )
-MESSAGE( "SDL Include Dir is " ${SDL_INCLUDE_DIR} )
 ENDIF()
 
 IF (UNIX AND NOT APPLE)
@@ -47,14 +52,14 @@ IF (APPLE)
 ENDIF()
 
 IF (WIN32)
-  SET(CMAKE_FIND_LIBRARY_PREFIXES "")
-  SET(CMAKE_FIND_LIBRARY_SUFFIXES ".lib")
+	if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
+		message(FATAL_ERROR "Descent 3 needs 32 bit compilation on Windows for now")
+	endif()
 
-  FIND_PACKAGE( SDL REQUIRED )
-  FIND_PACKAGE( SDL_image REQUIRED )
-  MESSAGE( "SDL Include Dir is " ${SDL_INCLUDE_DIR} )
+	SET(CMAKE_FIND_LIBRARY_PREFIXES "")
+	SET(CMAKE_FIND_LIBRARY_SUFFIXES ".lib")
 
-	SET(D3_GAMEDIR "c:/games/Descent3/")	
+	SET(D3_GAMEDIR "c:/games/Descent3/")
 	set (CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "lib/win" "lib/win/directx")
 	SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Gm /EHsc /RTC1 /W3 /nologo /c /ZI /TP /errorReport:prompt")
 	SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /GL /FD /EHsc /W3 /nologo /c /Zi /TP /errorReport:prompt")
